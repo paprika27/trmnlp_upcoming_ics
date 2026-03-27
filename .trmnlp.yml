@@ -1,12 +1,12 @@
-trmnlp_upcoming_ics:
+upcoming_ics:
   name: 'Upcoming ICS Calendar'
   trmnlp:
-    id: 10001 # Update this if you register it in the official TRMNL directory
+    id: # Update this if you register it in the official TRMNL directory
     repo: 'https://github.com/paprika27/trmnlp_upcoming_ics'
     # Note: Update the zip_url with your specific commit hash or 'main.zip'
     zip_url: 'https://github.com/paprika27/trmnlp_upcoming_ics/archive/refs/heads/main.zip'
     version: '1.0.0'
-  logo_url: 'https://raw.githubusercontent.com/paprika27/trmnlp_upcoming_ics/main/logo.png'
+  logo_url: 'https://trmnl.com/images/plugins/caldav.svg'
   screenshot_url: 'https://raw.githubusercontent.com/paprika27/trmnlp_upcoming_ics/main/screenshot.png'
   license: 'MIT'
   byos:
@@ -20,6 +20,6 @@ trmnlp_upcoming_ics:
   funding:
     github: 'paprika27'
   author_bio:
-    description: 'A clean, highly customizable ICS calendar view for TRMNL with a visual timeline and smart hero status.'
+    description: 'A scrolling ICS calendar view for TRMNL with smart hero status.'
     github_url: 'https://github.com/paprika27/trmnlp_upcoming_ics'
     learn_more_url: 'https://github.com/paprika27/trmnlp_upcoming_ics/blob/main/README.md'
