@@ -1,0 +1,158 @@
+{% template calendar_canvas %}
+{% comment %} 
+  1. BASE MATH & SETTINGS
+{% endcomment %}
+{% assign offset_h = trmnl.plugin_settings.custom_fields_values.timezone_offset | default: 1 | plus: 0 %}
+{% assign offset_s = offset_h | times: 3600 %}
+{% assign now_utc_ts = "now" | date: "%s" | plus: 0 %}
+{% assign now_local_ts = now_utc_ts | plus: offset_s %}
+
+{% assign hours_to_show = trmnl.plugin_settings.custom_fields_values.hours_to_show | default: 6 | plus: 0 %}
+{% assign pct_per_min = 100.0 | divided_by: hours_to_show | divided_by: 60.0 %}
+
+{% assign f_scale = f_scale | default: 1.0 %}
+{% assign side_padding = side_padding | default: "2vw" %}
+
+{% assign time_fmt = trmnl.plugin_settings.custom_fields_values.time_format_hm | downcase %}
+{% assign date_fmt = trmnl.plugin_settings.custom_fields_values.date_format_short | downcase %}
+
+<style>
+  .cal-canvas { height: 100%; width: 100%; display: flex; flex-direction: column; padding: 1.5vh {{ side_padding }}; box-sizing: border-box; overflow: hidden; background: #fff; color: #000; }
+  .cal-header { border-bottom: 0.3vh solid #000; padding-bottom: 0.8vh; margin-bottom: 1.5vh; display: flex; justify-content: space-between; align-items: baseline; flex-shrink: 0; }
+  .text--time { font-size: {{ 5.5 | times: f_scale }}vw; font-weight: 900; }
+  .text--date { font-size: {{ 2.4 | times: f_scale }}vw; font-weight: 700; opacity: 0.5; margin-left: 1.5vw; white-space: nowrap; }
+
+  .cal-hero { background: #111; color: #fff; padding: 1.2vh 2.5vw; border-radius: 0.8vh; margin-bottom: 1.5vh; display: flex; align-items: center; flex-shrink: 0; min-height: 6vh; }
+  .hero-main { font-size: {{ 2.8 | times: f_scale }}vw; font-weight: 900; color: #fff; text-transform: uppercase; margin-right: 2vw; }
+  .hero-sub { font-size: {{ 2.0 | times: f_scale }}vw; font-weight: 700; color: #999; }
+
+  .timeline-outer { position: relative; flex-grow: 1; margin-bottom: 0.5vh; display: flex; flex-direction: row; overflow: hidden; }
+  .timeline-gutter { flex-shrink: 0; width: {{ 5.5 | times: f_scale }}vw; position: relative; }
+  .timeline-track { flex: 1; position: relative; border-left: 0.3vw solid #ddd; }
+
+  .m-label { position: absolute; right: 0.6vw; font-size: {{ 2.0 | times: f_scale }}vw; font-weight: 800; color: #bbb; transform: translateY(-50%); white-space: nowrap; }
+  .m-line { position: absolute; left: 0; width: 100%; border-top: 0.15vh dashed #ccc; z-index: 1; }
+
+  .ev-block { position: absolute; border-radius: 0 0.8vh 0.8vh 0; z-index: 10; box-sizing: border-box; padding: 0.8vh 1.2vw; border: 1px solid rgba(0,0,0,0.05); border-left-width: 0.8vw; background: rgba(0,0,0,0.02); width: 96%; left: 2%; overflow: hidden; }
+  .ev-title { font-size: {{ 2.3 | times: f_scale }}vw; font-weight: 800; line-height: 1.1; color: #000; {% if trmnl.plugin_settings.custom_fields_values.capitalize_text == 'true' %}text-transform: uppercase;{% endif %} }
+  .ev-meta { font-size: {{ 1.6 | times: f_scale }}vw; font-weight: 700; margin-top: 0.3vh; }
+</style>
+
+<div class="cal-canvas">
+  <div class="cal-header">
+    <div>
+      <span class="text--time">{{ now_local_ts | date: "%H:%M" }}</span>
+      <span class="text--date">
+        {% if date_fmt contains 'short' %}
+          {{ now_local_ts | date: "%d.%m." }}
+        {% else %}
+          {{ now_local_ts | date: "%a, %-d %b" }}
+        {% endif %}
+      </span>
+    </div>
+  </div>
+
+  {% comment %} 2. HERO LOGIC {% endcomment %}
+  {% assign current_event = null %}
+  {% assign next_event = null %}
+  {% for event in data.events %}
+    {% assign s_ts = event.start | date: "%s" | plus: 0 %}
+    {% assign e_ts = event.end | date: "%s" | plus: 0 %}
+    {% if s_ts <= now_utc_ts and e_ts > now_utc_ts %}
+      {% assign current_event = event %}{% break %}
+    {% elsif s_ts > now_utc_ts %}
+      {% assign next_event = event %}{% break %}
+    {% endif %}
+  {% endfor %}
+
+  <div class="cal-hero">
+    {% if current_event %}
+      <span class="hero-main">BUSY</span>
+      <span class="hero-sub">UNTIL {{ current_event.end | date: "%s" | plus: offset_s | date: "%H:%M" }}</span>
+    {% elsif next_event %}
+      <span class="hero-main">FREE</span>
+      {% assign next_start_ts = next_event.start | date: "%s" | plus: 0 %}
+      {% assign diff_s = next_start_ts | minus: now_utc_ts %}
+      {% assign h_val = diff_s | divided_by: 3600 %}
+      {% assign m_val = diff_s | divided_by: 60 | modulo: 60 %}
+      <span class="hero-sub">
+        {% if time_fmt contains 'digital' %}
+          FOR {{ h_val | prepend: '0' | slice: -2, 2 }}:{{ m_val | prepend: '0' | slice: -2, 2 }}
+        {% else %}
+          FOR {{ h_val }}H {{ m_val }}M
+        {% endif %}
+      </span>
+    {% else %}
+      <span class="hero-main">FREE</span>
+      <span class="hero-sub">CLEARED FOR TODAY</span>
+    {% endif %}
+  </div>
+
+  {% comment %} 3. TIMELINE {% endcomment %}
+  <div class="timeline-outer">
+    <div class="timeline-gutter">
+      {% assign current_min = now_local_ts | date: "%M" | plus: 0 %}
+      {% assign mins_to_next = 60 | minus: current_min %}
+      {% assign hr_now = now_local_ts | date: "%H" | plus: 0 %}
+      {% for i in (1..hours_to_show) %}
+        {% assign m_total = i | minus: 1 | times: 60 | plus: mins_to_next %}
+        {% assign m_top = m_total | times: pct_per_min %}
+        {% if m_top <= 100 %}
+          <span class="m-label" style="top: {{ m_top }}%;">{{ hr_now | plus: i | modulo: 24 }}:00</span>
+        {% endif %}
+      {% endfor %}
+    </div>
+
+    <div class="timeline-track">
+      {% for i in (1..hours_to_show) %}
+        {% assign m_top = i | minus: 1 | times: 60 | plus: mins_to_next | times: pct_per_min %}
+        {% if m_top <= 100 %}<div class="m-line" style="top: {{ m_top }}%;"></div>{% endif %}
+      {% endfor %}
+
+      {% for event in data.events %}
+        {% assign s_ts = event.start | date: "%s" | plus: 0 %}
+        {% assign e_ts = event.end | date: "%s" | plus: 0 %}
+        {% if e_ts > now_utc_ts %}
+          {% assign t_pct = s_ts | minus: now_utc_ts | divided_by: 60 | times: pct_per_min %}
+          {% if t_pct < 100 %}
+            {% assign h_pct = e_ts | minus: s_ts | divided_by: 60 | times: pct_per_min | at_least: 5 %}
+            
+            {% assign s1_label = trmnl.plugin_settings.custom_fields_values.source1_label %}
+            {% if event.source == s1_label %}
+              {% assign ev_color = trmnl.plugin_settings.custom_fields_values.source1_color | default: '#2563eb' %}
+            {% else %}
+              {% assign ev_color = trmnl.plugin_settings.custom_fields_values.source2_color | default: '#16a34a' %}
+            {% endif %}
+
+            {% comment %} MULTI-DAY DATE CHECK {% endcomment %}
+            {% assign s_day = s_ts | plus: offset_s | date: "%j" %}
+            {% assign e_day = e_ts | plus: offset_s | date: "%j" %}
+
+            <div class="ev-block" style="top: {{ t_pct }}%; height: {{ h_pct }}%; border-left-color: {{ ev_color }};">
+              <div class="ev-title">{{ event.summary }}</div>
+              <div class="ev-meta" style="color: {{ ev_color }};">
+                {{ s_ts | plus: offset_s | date: "%H:%M" }} – 
+                {% if s_day != e_day %}{{ e_ts | plus: offset_s | date: "%a" }} {% endif %}
+                {{ e_ts | plus: offset_s | date: "%H:%M" }}
+              </div>
+            </div>
+          {% endif %}
+        {% endif %}
+      {% endfor %}
+    </div>
+
+    <div style="position:absolute;top:0;left:0;width:100%;display:flex;align-items:center;z-index:51;pointer-events:none;">
+      <span style="background:#ff4444;color:#fff;font-size:{{ 1.4 | times: f_scale }}vw;padding:0.1vh 0.5vw;border-radius:0.3vh;font-weight:900;white-space:nowrap;flex-shrink:0;">NOW</span>
+      <div style="flex:1;border-top:0.4vh solid #ff4444;"></div>
+    </div>
+  </div>
+</div>
+
+{% unless trmnl.plugin_settings.custom_fields_values.hide_title_bar == 'yes' %}
+<div class="title_bar">
+  <img class="image" src="https://trmnl.com/images/plugins/caldav.svg">
+  <h1 class="title">Upcoming (ics)</h1>
+  <span class="instance">SYNC'D {{ data.last_updated }}</span>
+</div>
+{% endunless %}
+{% endtemplate %}
