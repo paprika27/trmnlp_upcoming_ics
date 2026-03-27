@@ -1,0 +1,66 @@
+-
+  keyname: source1_color
+  field_type: string
+  name: 'Source 1 — Accent color'
+  default: '#2563eb'
+  placeholder: '#2563eb'
+-
+  keyname: source1_label
+  field_type: string
+  name: 'Source 1 — Display name'
+  default: Google
+  placeholder: Google
+-
+  keyname: source2_color
+  field_type: string
+  name: 'Source 2 — Accent color'
+  default: '#16a34a'
+  placeholder: '#16a34a'
+-
+  keyname: source2_label
+  field_type: string
+  name: 'Source 2 — Display name'
+  default: Work
+  placeholder: Work
+-
+  keyname: timezone_offset
+  field_type: string
+  name: 'UTC offset in hours (e.g. 1 for CET, 2 for CEST)'
+  default: '1'
+  placeholder: '1'
+-
+  keyname: date_format_short
+  field_type: select
+  name: 'Date Header Format'
+  options:
+    -
+      'Fri, 27 Mar': long
+    -
+      27.03.: short
+  default: long
+-
+  keyname: time_format_hm
+  field_type: select
+  name: 'Time Remaining Format'
+  options:
+    -
+      '1H 15M': text
+    -
+      '01:15': digital
+  default: text
+-
+  keyname: capitalize_text
+  field_type: select
+  name: 'Capitalize event titles'
+  options:
+    -
+      'true': 'true'
+    -
+      'false': 'false'
+  default: 'true'
+-
+  keyname: hours_to_show
+  name: 'Hours to display (Full height)'
+  field_type: string
+  default: '6'
+  placeholder: '6'
