@@ -14,12 +14,12 @@ A clean, highly-glanceable calendar plugin for [TRMNL](https://usetrmnl.com). Th
 
 ## Installation
 
-0. Gather your ics. Here is how I did it: [CalDav + Google ICS -> TRMNL](https://github.com/paprika27/caldav_google_ics_to_trmnl)
+0. Gather your ics. Here is how I did it: [EWS -> CalDav + Google ICS -> TRMNL](https://github.com/paprika27/caldav_google_ics_to_trmnl)
 1. Create a new **Private Plugin** in your TRMNL Dashboard.
 2. Set the **Data Source** to `CURL` or use a BYOS (Bring Your Own Server) instance like [Laravel TRMNL](https://github.com/usetrmnl/laravel-trmnl).
-3. Copy the contents of `calendar_canvas.liquid` into the **Template** section of your plugin.
+3. Copy the contents of `calendar_canvas.liquid` into the **Template** section of your plugin or upload the recipe.
 
-## Plugin Strategy Configuration
+## Plugin Configuration
 
 To enable the toggles and color settings, add the following to your plugin's **Strategy** (YAML) configuration:
 
@@ -74,7 +74,7 @@ To enable the toggles and color settings, add the following to your plugin's **S
 
 ## Data Structure
 
-The template expects the following JSON structure from your `data` object:
+The template expects the following JSON structure from your `data` object (served by [EWS -> CalDav + Google ICS -> TRMNL](https://github.com/paprika27/caldav_google_ics_to_trmnl)):
 
 ```json
 {
