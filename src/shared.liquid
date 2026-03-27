@@ -68,7 +68,17 @@
   <div class="cal-hero">
     {% if current_event %}
       <span class="hero-main">BUSY</span>
-      <span class="hero-sub">UNTIL {{ current_event.end | date: "%s" | plus: offset_s | date: "%H:%M" }}</span>
+      
+      {% comment %} Logic to check if the meeting ends on a different day {% endcomment %}
+      {% assign s_day = current_event.start | date: "%j" %}
+      {% assign e_day = current_event.end | date: "%j" %}
+      {% assign until_local = current_event.end | date: "%s" | plus: offset_s %}
+      
+      <span class="hero-sub">
+        UNTIL 
+        {% if s_day != e_day %}{{ until_local | date: "%a" }} {% endif %}
+        {{ until_local | date: "%H:%M" }}
+      </span>
     {% elsif next_event %}
       <span class="hero-main">FREE</span>
       {% assign next_start_ts = next_event.start | date: "%s" | plus: 0 %}
