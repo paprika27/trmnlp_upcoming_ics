@@ -15,13 +15,16 @@ A clean, highly-glanceable calendar plugin for [TRMNL](https://usetrmnl.com). Th
 ## Installation
 
 0. Gather your ics. Here is how I did it: [EWS -> CalDav + Google ICS -> TRMNL](https://github.com/paprika27/caldav_google_ics_to_trmnl)
-1. Create a new **Private Plugin** in your TRMNL Dashboard.
-2. Set the **Data Source** to `CURL` or use a BYOS (Bring Your Own Server) instance like [Laravel TRMNL](https://github.com/usetrmnl/laravel-trmnl).
-3. Copy the contents of `calendar_canvas.liquid` into the **Template** section of your plugin or upload the recipe.
+1. Upload this recipe.
+
+Alternatively to uploading/importing:
+1. Create a new **Private Plugin** in your TRMNL Dashboard (or **Recipe** in your [Larapaper](https://github.com/usetrmnl/larapaper) install)
+2. Set the **Data Source** to `CURL` or fill the poll URL with the correct URL (i.e. http://ical-proxy/events.json if you followed [EWS -> CalDav + Google ICS -> TRMNL](https://github.com/paprika27/caldav_google_ics_to_trmnl)).
+3. Copy the contents of `*.liquid` into the **Template** section of your plugin and `settings.yml` into the settings field (in Larapaper, it's behind the dropdown next to Add to Playlist).
 
 ## Plugin Configuration
 
-To enable the toggles and color settings, add the following to your plugin's **Strategy** (YAML) configuration:
+To enable the toggles and color settings, add the following to your plugin's **Settings** (YAML) configuration:
 
 ```yaml
 -
@@ -74,7 +77,7 @@ To enable the toggles and color settings, add the following to your plugin's **S
 
 ## Data Structure
 
-The template expects the following JSON structure from your `data` object (served by [EWS -> CalDav + Google ICS -> TRMNL](https://github.com/paprika27/caldav_google_ics_to_trmnl)):
+The recipe expects the following JSON structure from your `data` object (served like this by [EWS -> CalDav + Google ICS -> TRMNL](https://github.com/paprika27/caldav_google_ics_to_trmnl)):
 
 ```json
 {
