@@ -33,9 +33,10 @@
   .m-label { position: absolute; right: 0.6vw; font-size: {{ 2.0 | times: f_scale }}vw; font-weight: 800; color: #bbb; transform: translateY(-50%); white-space: nowrap; }
   .m-line { position: absolute; left: 0; width: 100%; border-top: 0.15vh dashed #ccc; z-index: 1; }
 
-  .ev-block { position: absolute; border-radius: 0 0.8vh 0.8vh 0; z-index: 10; box-sizing: border-box; padding: 0.8vh 1.2vw; border: 1px solid rgba(0,0,0,0.05); border-left-width: 0.8vw; background: rgba(0,0,0,0.02); width: 96%; left: 2%; overflow: hidden; }
-  .ev-title { font-size: {{ 2.3 | times: f_scale }}vw; font-weight: 800; line-height: 1.1; color: #000; {% if trmnl.plugin_settings.custom_fields_values.capitalize_text == 'true' %}text-transform: uppercase;{% endif %} }
-  .ev-meta { font-size: {{ 1.6 | times: f_scale }}vw; font-weight: 700; margin-top: 0.3vh; }
+  /* Modified ev-block to support lanes */
+  .ev-block { position: absolute; border-radius: 0 0.8vh 0.8vh 0; z-index: 10; box-sizing: border-box; padding: 0.6vh 1vw; border: 1px solid rgba(0,0,0,0.1); border-left-width: 0.8vw; background: #fff; overflow: hidden; box-shadow: 2px 2px 0px rgba(0,0,0,0.05); }
+  .ev-title { font-size: {{ 2.1 | times: f_scale }}vw; font-weight: 800; line-height: 1.05; color: #000; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; {% if trmnl.plugin_settings.custom_fields_values.capitalize_text == 'true' %}text-transform: uppercase;{% endif %} }
+  .ev-meta { font-size: {{ 1.5 | times: f_scale }}vw; font-weight: 700; margin-top: 0.2vh; }
 </style>
 
 <div class="cal-canvas">
@@ -68,17 +69,8 @@
   <div class="cal-hero">
     {% if current_event %}
       <span class="hero-main">BUSY</span>
-      
-      {% comment %} Logic to check if the meeting ends on a different day {% endcomment %}
-      {% assign s_day = current_event.start | date: "%j" %}
-      {% assign e_day = current_event.end | date: "%j" %}
       {% assign until_local = current_event.end | date: "%s" | plus: offset_s %}
-      
-      <span class="hero-sub">
-        UNTIL 
-        {% if s_day != e_day %}{{ until_local | date: "%a" }} {% endif %}
-        {{ until_local | date: "%H:%M" }}
-      </span>
+      <span class="hero-sub">UNTIL {{ until_local | date: "%H:%M" }}</span>
     {% elsif next_event %}
       <span class="hero-main">FREE</span>
       {% assign next_start_ts = next_event.start | date: "%s" | plus: 0 %}
@@ -98,7 +90,6 @@
     {% endif %}
   </div>
 
-  {% comment %} 3. TIMELINE {% endcomment %}
   <div class="timeline-outer">
     <div class="timeline-gutter">
       {% assign current_min = now_local_ts | date: "%M" | plus: 0 %}
@@ -119,31 +110,59 @@
         {% if m_top <= 100 %}<div class="m-line" style="top: {{ m_top }}%;"></div>{% endif %}
       {% endfor %}
 
+      {% assign lane0_end = 0 %}
+      {% assign lane1_end = 0 %}
+
       {% for event in data.events %}
         {% assign s_ts = event.start | date: "%s" | plus: 0 %}
         {% assign e_ts = event.end | date: "%s" | plus: 0 %}
+        
         {% if e_ts > now_utc_ts %}
           {% assign t_pct = s_ts | minus: now_utc_ts | divided_by: 60 | times: pct_per_min %}
+          
           {% if t_pct < 100 %}
             {% assign h_pct = e_ts | minus: s_ts | divided_by: 60 | times: pct_per_min | at_least: 5 %}
             
-            {% assign s1_label = trmnl.plugin_settings.custom_fields_values.source1_label %}
-            {% if event.source == s1_label %}
-              {% assign ev_color = trmnl.plugin_settings.custom_fields_values.source1_color | default: '#2563eb' %}
+            {% comment %} 
+              LANE ASSIGNMENT
+            {% endcomment %}
+            {% if s_ts >= lane0_end %}
+              {% assign current_lane = 0 %}
+              {% assign lane0_end = e_ts %}
             {% else %}
-              {% assign ev_color = trmnl.plugin_settings.custom_fields_values.source2_color | default: '#16a34a' %}
+              {% assign current_lane = 1 %}
+              {% assign lane1_end = e_ts %}
             {% endif %}
 
-            {% comment %} MULTI-DAY DATE CHECK {% endcomment %}
-            {% assign s_day = s_ts | plus: offset_s | date: "%j" %}
-            {% assign e_day = e_ts | plus: offset_s | date: "%j" %}
+            {% comment %} 
+              COLOR LOGIC 
+              Ensure your Strategy Labels are exactly "google" and "charite" 
+              (case sensitive!) to match your JSON payload.
+            {% endcomment %}
+            {% assign s1_label = trmnl.plugin_settings.custom_fields_values.source1_label %}
+            {% assign s2_label = trmnl.plugin_settings.custom_fields_values.source2_label %}
 
-            <div class="ev-block" style="top: {{ t_pct }}%; height: {{ h_pct }}%; border-left-color: {{ ev_color }};">
+            {% if event.source == s1_label %}
+              {% assign ev_color = trmnl.plugin_settings.custom_fields_values.source1_color | default: '#2563eb' %}
+            {% elsif event.source == s2_label %}
+              {% assign ev_color = trmnl.plugin_settings.custom_fields_values.source2_color | default: '#16a34a' %}
+            {% else %}
+              {% assign ev_color = '#666666' %} {% comment %} Fallback for no match {% endcomment %}
+            {% endif %}
+
+            <div class="ev-block" style="
+                top: {{ t_pct }}%; 
+                height: {{ h_pct }}%; 
+                border-left: 0.8vw solid {{ ev_color }};
+                {% if current_lane == 0 %}
+                  width: 46%; left: 2%; z-index: 10;
+                {% else %}
+                  width: 46%; left: 51%; z-index: 10;
+                {% endif %}
+            ">
               <div class="ev-title">{{ event.summary }}</div>
               <div class="ev-meta" style="color: {{ ev_color }};">
-                {{ s_ts | plus: offset_s | date: "%H:%M" }} – 
-                {% if s_day != e_day %}{{ e_ts | plus: offset_s | date: "%a" }} {% endif %}
-                {{ e_ts | plus: offset_s | date: "%H:%M" }}
+                {{ s_ts | plus: offset_s | date: "%H:%M" }} – {{ e_ts | plus: offset_s | date: "%H:%M" }}
               </div>
             </div>
           {% endif %}
