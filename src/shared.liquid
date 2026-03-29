@@ -1,10 +1,15 @@
 {% template calendar_canvas %}
 {% comment %} 
   1. BASE MATH & SETTINGS
+  We treat everything as UTC for calculations to avoid 'shifting' errors.
 {% endcomment %}
-{% assign offset_h = trmnl.plugin_settings.custom_fields_values.timezone_offset | default: 1 | plus: 0 %}
+{% assign offset_h = trmnl.plugin_settings.custom_fields_values.timezone_offset | default: 2 | plus: 0 %}
 {% assign offset_s = offset_h | times: 3600 %}
+
+{% comment %} Current UTC time for math {% endcomment %}
 {% assign now_utc_ts = "now" | date: "%s" | plus: 0 %}
+
+{% comment %} Current Local time for the clock label {% endcomment %}
 {% assign now_local_ts = now_utc_ts | plus: offset_s %}
 
 {% assign hours_to_show = trmnl.plugin_settings.custom_fields_values.hours_to_show | default: 6 | plus: 0 %}
