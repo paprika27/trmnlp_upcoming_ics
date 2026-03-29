@@ -3,7 +3,7 @@
   1. BASE MATH & SETTINGS
   We treat everything as UTC for calculations to avoid 'shifting' errors.
 {% endcomment %}
-{% assign offset_h = trmnl.plugin_settings.custom_fields_values.timezone_offset | default: 2 | plus: 0 %}
+{% assign offset_h = trmnl.plugin_settings.custom_fields_values.timezone_offset | default: 1 | plus: 0 %}
 {% assign offset_s = offset_h | times: 3600 %}
 
 {% comment %} Current UTC time for math {% endcomment %}
